@@ -1,0 +1,618 @@
+// ========================================
+// GENERATOR
+// ========================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ========================================
+// DATASOURCE
+// ========================================
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ========================================
+// ENUMS
+// ========================================
+
+enum UserRole {
+  CUSTOMER
+  OWNER
+}
+
+enum VehicleType {
+  SEDAN
+  SUV
+  MINIVAN
+  LUXURY
+  WHEELCHAIR_ACCESSIBLE
+}
+
+enum TransmissionType {
+  AUTOMATIC
+  MANUAL
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+  HYBRID
+  ELECTRIC
+}
+
+enum VehicleOperationalStatus {
+  ACTIVE
+  MAINTENANCE
+  OUT_OF_SERVICE
+}
+
+enum VehicleAvailabilityStatus {
+  AVAILABLE
+  RESERVED
+  ON_TRIP
+}
+
+enum DriverOperationalStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  ON_LEAVE
+}
+
+enum DriverAvailabilityStatus {
+  AVAILABLE
+  ASSIGNED
+  OFF_DUTY
+}
+
+enum TripType {
+  ONE_WAY
+  ROUND_TRIP
+  AIRPORT_PICKUP
+  AIRPORT_DROPOFF
+  HOURLY
+}
+
+enum BookingStatus {
+  PENDING
+  ACCEPTED
+  PAYMENT_PENDING
+  CONFIRMED
+  VEHICLE_ASSIGNED
+  DRIVER_ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  REJECTED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  PAID
+  FAILED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentGateway {
+  STRIPE
+  SQUARE
+  PAYPAL
+  CASH
+  OTHER
+}
+
+enum PaymentMethod {
+  CARD
+  APPLE_PAY
+  GOOGLE_PAY
+  BANK_TRANSFER
+  CASH
+}
+
+enum NotificationType {
+  EMAIL
+  SMS
+  PUSH
+  IN_APP
+  WHATSAPP
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+  READ
+}
+
+enum CancellationBy {
+  CUSTOMER
+  OWNER
+  SYSTEM
+}
+
+enum ContactMessageStatus {
+  NEW
+  READ
+  REPLIED
+  CLOSED
+}
+
+// ========================================
+// MODELS
+// ========================================
+
+// ========================================
+// USERS
+// ========================================
+
+model User {
+  id String @id @default(uuid()) @db.Uuid
+
+  firstName String @map("first_name") @db.VarChar(50)
+  lastName  String @map("last_name") @db.VarChar(50)
+
+  email String @unique @db.VarChar(255)
+
+  countryCode String @default("+1")
+
+  phone String @unique @db.VarChar(20)
+
+  passwordHash String @map("password_hash")
+
+  role UserRole @default(CUSTOMER)
+
+  isEmailVerified Boolean @default(false) @map("is_email_verified")
+
+  isPhoneVerified Boolean @default(false) @map("is_phone_verified")
+
+  isActive Boolean @default(true) @map("is_active")
+
+  lastLoginAt DateTime? @map("last_login_at") @db.Timestamptz()
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  // Relations
+
+  bookings Booking[]
+
+  reviews Review[]
+
+  notifications Notification[]
+
+  sessions UserSession[]
+
+  auditLogs            AuditLog[]
+  BookingStatusHistory BookingStatusHistory[]
+
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+  @@map("users")
+}
+
+// ========================================
+// USER SESSIONS
+// ========================================
+
+model UserSession {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @map("user_id") @db.Uuid
+
+  refreshTokenHash String @map("refresh_token_hash")
+
+  deviceName String? @map("device_name") @db.VarChar(100)
+
+  browser String? @db.VarChar(100)
+
+  operatingSystem String? @map("operating_system") @db.VarChar(100)
+
+  ipAddress String? @map("ip_address") @db.VarChar(45)
+
+  expiresAt DateTime @map("expires_at") @db.Timestamptz()
+
+  lastUsedAt DateTime? @map("last_used_at") @db.Timestamptz()
+
+  revokedAt DateTime? @map("revoked_at") @db.Timestamptz()
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("user_sessions")
+}
+
+// ========================================
+// VEHICLES
+// ========================================
+
+model Vehicle {
+  id                 String                    @id @default(uuid()) @db.Uuid
+  displayName        String                    @map("display_name") @db.VarChar(100)
+  make               String                    @db.VarChar(50)
+  model              String                    @db.VarChar(50)
+  modelYear          Int                       @map("model_year")
+  registrationNumber String                    @unique @map("registration_number") @db.VarChar(30)
+  vehicleType        VehicleType               @map("vehicle_type")
+  transmissionType   TransmissionType          @map("transmission_type")
+  fuelType           FuelType                  @map("fuel_type")
+  passengerCapacity  Int                       @map("passenger_capacity") @db.SmallInt
+  luggageCapacity    Int?                      @map("luggage_capacity") @db.SmallInt
+  color              String?                   @db.VarChar(30)
+  operationalStatus  VehicleOperationalStatus  @default(ACTIVE) @map("operational_status")
+  availabilityStatus VehicleAvailabilityStatus @default(AVAILABLE) @map("availability_status")
+  notes              String?
+  createdAt          DateTime                  @default(now()) @map("created_at") @db.Timestamptz()
+  updatedAt          DateTime                  @updatedAt @map("updated_at") @db.Timestamptz()
+
+  bookings Booking[]
+  images   VehicleImage[]
+
+  @@index([vehicleType])
+  @@index([availabilityStatus])
+  @@index([operationalStatus])
+  @@map("vehicles")
+}
+
+// ========================================
+// VEHICLE IMAGES
+// ========================================
+
+model VehicleImage {
+  id           String   @id @default(uuid()) @db.Uuid
+  vehicleId    String   @map("vehicle_id") @db.Uuid
+  imageUrl     String   @map("image_url")
+  altText      String?  @map("alt_text") @db.VarChar(255)
+  isPrimary    Boolean  @default(false) @map("is_primary")
+  displayOrder Int      @default(1) @map("display_order") @db.SmallInt
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+
+  @@index([vehicleId])
+  @@map("vehicle_images")
+}
+
+// ========================================
+// DRIVERS
+// ========================================
+
+model Driver {
+  id String @id @default(uuid()) @db.Uuid
+
+  firstName String @map("first_name") @db.VarChar(50)
+
+  lastName String @map("last_name") @db.VarChar(50)
+
+  email String? @unique @db.VarChar(255)
+
+  countryCode String? @default("+1") @map("country_code") @db.VarChar(10)
+
+  phone String @unique @db.VarChar(20)
+
+  licenseNumber String @unique @map("license_number") @db.VarChar(100)
+
+  profileImage String? @map("profile_image")
+
+  status DriverOperationalStatus @default(ACTIVE)
+
+  availabilityStatus DriverAvailabilityStatus @default(AVAILABLE) @map("availability_status")
+
+  notes String?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  bookings Booking[]
+
+  @@index([status])
+  @@index([availabilityStatus])
+  @@map("drivers")
+}
+
+// ========================================
+// BOOKINGS
+// ========================================
+
+model Booking {
+  id String @id @default(uuid()) @db.Uuid
+
+  bookingReference String @unique @map("booking_reference") @db.VarChar(30)
+
+  customerId String @map("customer_id") @db.Uuid
+
+  vehicleId String? @map("vehicle_id") @db.Uuid
+
+  driverId String? @map("driver_id") @db.Uuid
+
+  tripType TripType @map("trip_type")
+
+  pickupAddress String @map("pickup_address")
+
+  dropoffAddress String @map("dropoff_address")
+
+  pickupDate DateTime @map("pickup_date") @db.Date
+
+  pickupTime DateTime @map("pickup_time") @db.Time(6)
+
+  passengerCount Int @map("passenger_count") @db.SmallInt
+
+  luggageCount Int? @map("luggage_count") @db.SmallInt
+
+  specialInstructions String? @map("special_instructions")
+
+  estimatedFare Decimal @map("estimated_fare") @db.Decimal(10, 2)
+
+  finalFare Decimal? @map("final_fare") @db.Decimal(10, 2)
+
+  bookingStatus BookingStatus @default(PENDING) @map("booking_status")
+
+  cancelledBy CancellationBy? @map("cancelled_by")
+
+  cancellationReason String? @map("cancellation_reason")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  customer User @relation(fields: [customerId], references: [id], onDelete: Restrict)
+
+  vehicle Vehicle? @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+
+  driver Driver? @relation(fields: [driverId], references: [id], onDelete: SetNull)
+
+  payment Payment?
+
+  review Review?
+
+  statusHistory BookingStatusHistory[]
+
+  notifications Notification[]
+
+  @@index([customerId])
+  @@index([vehicleId])
+  @@index([driverId])
+  @@index([bookingStatus])
+  @@index([pickupDate])
+  @@map("bookings")
+}
+
+// ========================================
+// BOOKING STATUS HISTORY
+// ========================================
+
+model BookingStatusHistory {
+  id String @id @default(uuid()) @db.Uuid
+
+  bookingId String @map("booking_id") @db.Uuid
+
+  status BookingStatus
+
+  remarks String?
+
+  changedByUserId String? @map("changed_by_user_id") @db.Uuid
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  changedBy User? @relation(fields: [changedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([bookingId])
+  @@index([status])
+  @@map("booking_status_history")
+}
+
+// ========================================
+// PAYMENTS
+// ========================================
+
+model Payment {
+  id String @id @default(uuid()) @db.Uuid
+
+  bookingId String @unique @map("booking_id") @db.Uuid
+
+  transactionId String? @unique @map("transaction_id") @db.VarChar(255)
+
+  gateway PaymentGateway
+
+  paymentMethod PaymentMethod @map("payment_method")
+
+  amount Decimal @db.Decimal(10, 2)
+
+  currency String @default("CAD") @db.VarChar(10)
+
+  paymentStatus PaymentStatus @default(PENDING) @map("payment_status")
+
+  paidAt DateTime? @map("paid_at") @db.Timestamptz()
+
+  gatewayResponse Json? @map("gateway_response")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([paymentStatus])
+  @@index([gateway])
+  @@map("payments")
+}
+
+// ========================================
+// NOTIFICATIONS
+// ========================================
+
+model Notification {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String @map("user_id") @db.Uuid
+
+  bookingId String? @map("booking_id") @db.Uuid
+
+  type NotificationType
+
+  title String @db.VarChar(150)
+
+  message String
+
+  status NotificationStatus @default(PENDING)
+
+  sentAt DateTime? @map("sent_at") @db.Timestamptz()
+
+  readAt DateTime? @map("read_at") @db.Timestamptz()
+
+  metadata Json?
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  booking Booking? @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([bookingId])
+  @@index([status])
+  @@map("notifications")
+}
+
+// ========================================
+// REVIEWS
+// ========================================
+
+model Review {
+  id String @id @default(uuid()) @db.Uuid
+
+  bookingId String @unique @map("booking_id") @db.Uuid
+
+  customerId String @map("customer_id") @db.Uuid
+
+  rating Int @db.SmallInt
+
+  review String?
+
+  ownerReply String? @map("owner_reply")
+
+  isVisible Boolean @default(true) @map("is_visible")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  booking Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  customer User @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([rating])
+  @@map("reviews")
+}
+
+// ========================================
+// CONTACT MESSAGES
+// ========================================
+
+model ContactMessage {
+  id String @id @default(uuid()) @db.Uuid
+
+  name String @db.VarChar(100)
+
+  email String @db.VarChar(255)
+
+  phone String? @db.VarChar(20)
+
+  subject String @db.VarChar(200)
+
+  message String
+
+  status ContactMessageStatus @default(NEW)
+
+  repliedAt DateTime? @map("replied_at") @db.Timestamptz()
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@index([status])
+  @@map("contact_messages")
+}
+
+// ========================================
+// PRICING SETTINGS
+// ========================================
+
+model PricingSetting {
+  id String @id @default(uuid()) @db.Uuid
+
+  baseFare Decimal @map("base_fare") @db.Decimal(10, 2)
+
+  perKmRate Decimal @map("per_km_rate") @db.Decimal(10, 2)
+
+  perMinuteRate Decimal @map("per_minute_rate") @db.Decimal(10, 2)
+
+  minimumFare Decimal @map("minimum_fare") @db.Decimal(10, 2)
+
+  cancellationFee Decimal @map("cancellation_fee") @db.Decimal(10, 2)
+
+  airportSurcharge Decimal @map("airport_surcharge") @db.Decimal(10, 2)
+
+  taxPercentage Decimal @map("tax_percentage") @db.Decimal(5, 2)
+
+  currency String @default("CAD") @db.VarChar(10)
+
+  effectiveFrom DateTime @map("effective_from") @db.Timestamptz()
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz()
+
+  @@map("pricing_settings")
+}
+
+// ========================================
+// AUDIT LOGS
+// ========================================
+
+model AuditLog {
+  id String @id @default(uuid()) @db.Uuid
+
+  userId String? @map("user_id") @db.Uuid
+
+  action String @db.VarChar(100)
+
+  entityType String @map("entity_type") @db.VarChar(100)
+
+  entityId String? @map("entity_id") @db.Uuid
+
+  oldData Json? @map("old_data")
+
+  newData Json? @map("new_data")
+
+  ipAddress String? @map("ip_address") @db.VarChar(45)
+
+  userAgent String? @map("user_agent")
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz()
+
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([entityType])
+  @@index([action])
+  @@map("audit_logs")
+}
