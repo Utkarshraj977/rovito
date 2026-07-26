@@ -5,7 +5,7 @@ const validate = (schema) => {
     if (!result.success) {
       return res.status(400).json({
         success: false,
-        statusCode: 400,
+        statusCode: 400, 
         message: "Validation failed",
         errors: result.error.issues,
         data: null,

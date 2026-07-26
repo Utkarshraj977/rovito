@@ -13,7 +13,7 @@ const authenticate = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, "Unauthorized request");
   }
 
-  let decodedToken;
+  let decodedToken; 
 
   try {
     decodedToken = jwt.verify(token, env.JWT_ACCESS_SECRET);

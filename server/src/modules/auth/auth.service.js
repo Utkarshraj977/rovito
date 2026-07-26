@@ -38,6 +38,10 @@ const loginUser = async ({ email, password }) => {
     throw new ApiError(404, "User not found");
   }
 
+  if (!user.isActive) {
+    throw new ApiError(403, "Account is disabled");
+  }
+
   const isPasswordValid = await bcrypt.compare(
     password,
     user.passwordHash
