@@ -1,25 +1,40 @@
 import app from "./app.js";
+import  prisma  from "./config/prisma.js";
 import env from "./config/env.js";
-import prisma from "./config/prisma.js";
+import logger from "./utils/logger.js";
 
-async function startServer() {
+const startServer = async () => {
   try {
-    // Verify database connection
-    await prisma.$connect(); 
+    await prisma.$connect();
 
-    console.log("✅ Connected to PostgreSQL (Neon)");
+    logger.info("✅ Connected to PostgreSQL");
 
     app.listen(env.PORT, () => {
-      console.log(
-        `🚀 Server running in ${env.NODE_ENV} mode on http://localhost:${env.PORT}`
+      logger.info(
+        `🚀 Server running on http://localhost:${env.PORT}`
       );
     });
   } catch (error) {
-    console.error("❌ Failed to start server");
-    console.error(error);
-
+    logger.error(error);
+    await prisma.$disconnect();
     process.exit(1);
   }
-}
+};
 
 startServer();
+
+process.on("SIGINT", async () => {
+  logger.info("🛑 Server shutting down...");
+
+  await prisma.$disconnect();
+
+  process.exit(0);
+});
+
+process.on("SIGTERM", async () => {
+  logger.info("🛑 Server terminated...");
+
+  await prisma.$disconnect();
+
+  process.exit(0);
+});

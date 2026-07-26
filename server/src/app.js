@@ -7,10 +7,17 @@ import morgan from "morgan";
 
 import env from "./config/env.js";
 
+import apiRoutes from "./routes/index.js";
+import notFoundHandler from "./middlewares/notFound.middleware.js";
+import errorHandler from "./middlewares/error.middleware.js";
+
+
 const app = express();
+
 
 // Security
 app.use(helmet());
+
 
 // CORS
 app.use(
@@ -20,18 +27,23 @@ app.use(
   })
 );
 
+
 // Compression
 app.use(compression());
+
 
 // Body Parsers
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
 
+
 // Cookies
 app.use(cookieParser());
 
+
 // Logger
 app.use(morgan("dev"));
+
 
 // Health Check
 app.get("/", (req, res) => {
@@ -41,17 +53,17 @@ app.get("/", (req, res) => {
   });
 });
 
-// Routes
-// app.use("/api/v1/auth", authRoutes);
-// app.use("/api/v1/users", userRoutes);
-// app.use("/api/v1/bookings", bookingRoutes);
 
-// 404 Handler (we'll add middleware later)
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "Route not found",
-  });
-});
+// API Routes
+app.use("/api/v1", apiRoutes);
+
+
+// 404 Handler
+app.use(notFoundHandler);
+
+
+// Global Error Handler
+app.use(errorHandler);
+
 
 export default app;
