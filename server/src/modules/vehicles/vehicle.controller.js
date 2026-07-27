@@ -3,8 +3,10 @@ import ApiResponse from "../../utils/apiResponse.js";
 
 import vehicleService from "./vehicle.service.js";
 
+// ========================================
+// CREATE VEHICLE
+// ========================================
 
-// Create Vehicle
 const createVehicle = asyncHandler(async (req, res) => {
   const vehicle = await vehicleService.createVehicle(
     req.body
@@ -19,8 +21,10 @@ const createVehicle = asyncHandler(async (req, res) => {
   );
 });
 
+// ========================================
+// GET VEHICLE BY ID
+// ========================================
 
-// Get Vehicle By ID
 const getVehicleById = asyncHandler(async (req, res) => {
   const vehicle = await vehicleService.getVehicleById(
     req.params.id
@@ -35,15 +39,22 @@ const getVehicleById = asyncHandler(async (req, res) => {
   );
 });
 
+// ========================================
+// GET ALL VEHICLES
+// ========================================
 
-// Get All Vehicles
 const getAllVehicles = asyncHandler(async (req, res) => {
-  const { skip, take } = req.pagination;
-
-  const vehicles = await vehicleService.getAllVehicles(
-    skip,
-    take
-  );
+  const vehicles =
+    await vehicleService.getAllVehicles({
+      page: req.query.page,
+      limit: req.query.limit,
+      search: req.query.search,
+      vehicleType: req.query.vehicleType,
+      availabilityStatus:
+        req.query.availabilityStatus,
+      operationalStatus:
+        req.query.operationalStatus,
+    });
 
   return res.status(200).json(
     new ApiResponse(
@@ -54,13 +65,16 @@ const getAllVehicles = asyncHandler(async (req, res) => {
   );
 });
 
+// ========================================
+// UPDATE VEHICLE
+// ========================================
 
-// Update Vehicle
 const updateVehicle = asyncHandler(async (req, res) => {
-  const vehicle = await vehicleService.updateVehicle(
-    req.params.id,
-    req.body
-  );
+  const vehicle =
+    await vehicleService.updateVehicle(
+      req.params.id,
+      req.body
+    );
 
   return res.status(200).json(
     new ApiResponse(
@@ -71,27 +85,53 @@ const updateVehicle = asyncHandler(async (req, res) => {
   );
 });
 
+// ========================================
+// UPDATE AVAILABILITY STATUS
+// ========================================
 
-// Delete Vehicle
-const deleteVehicle = asyncHandler(async (req, res) => {
-  await vehicleService.deleteVehicle(
-    req.params.id
-  );
+const updateAvailabilityStatus =
+  asyncHandler(async (req, res) => {
+    const vehicle =
+      await vehicleService.updateAvailabilityStatus(
+        req.params.id,
+        req.body.availabilityStatus
+      );
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      null,
-      "Vehicle deleted successfully"
-    )
-  );
-});
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        vehicle,
+        "Vehicle availability updated successfully"
+      )
+    );
+  });
 
+// ========================================
+// UPDATE OPERATIONAL STATUS
+// ========================================
+
+const updateOperationalStatus =
+  asyncHandler(async (req, res) => {
+    const vehicle =
+      await vehicleService.updateOperationalStatus(
+        req.params.id,
+        req.body.operationalStatus
+      );
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        vehicle,
+        "Vehicle operational status updated successfully"
+      )
+    );
+  });
 
 export {
   createVehicle,
   getVehicleById,
   getAllVehicles,
   updateVehicle,
-  deleteVehicle,
+  updateAvailabilityStatus,
+  updateOperationalStatus,
 };

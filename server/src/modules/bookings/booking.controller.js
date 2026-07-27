@@ -1,10 +1,12 @@
 import asyncHandler from "../../utils/asyncHandler.js";
 import ApiResponse from "../../utils/apiResponse.js";
-
+import getPagination from "../../utils/pagination.js";
 import bookingService from "./booking.service.js";
 
+// ========================================
+// CREATE BOOKING (CUSTOMER)
+// ========================================
 
-// Create Booking
 const createBooking = asyncHandler(async (req, res) => {
   const booking = await bookingService.createBooking(
     req.body,
@@ -20,11 +22,14 @@ const createBooking = asyncHandler(async (req, res) => {
   );
 });
 
+// ========================================
+// GET BOOKING BY ID
+// ========================================
 
-// Get Booking By ID
 const getBookingById = asyncHandler(async (req, res) => {
   const booking = await bookingService.getBookingById(
-    req.params.id
+    req.params.id,
+    req.user
   );
 
   return res.status(200).json(
@@ -36,15 +41,18 @@ const getBookingById = asyncHandler(async (req, res) => {
   );
 });
 
+// ========================================
+// GET ALL BOOKINGS (OWNER)
+// ========================================
 
-// Get All Bookings
 const getAllBookings = asyncHandler(async (req, res) => {
-  const { skip, take } = req.pagination;
-
-  const bookings = await bookingService.getAllBookings(
-    skip,
-    take
+  const { skip, take } = getPagination(
+    req.query.page,
+    req.query.limit
   );
+
+  const bookings =
+    await bookingService.getAllBookings(skip, take);
 
   return res.status(200).json(
     new ApiResponse(
@@ -55,29 +63,75 @@ const getAllBookings = asyncHandler(async (req, res) => {
   );
 });
 
+// ========================================
+// GET MY BOOKINGS (CUSTOMER)
+// ========================================
 
-// Update Booking
-const updateBooking = asyncHandler(async (req, res) => {
-  const booking = await bookingService.updateBooking(
-    req.params.id,
-    req.body
+const getMyBookings = asyncHandler(async (req, res) => {
+  const bookings =
+    await bookingService.getMyBookings(req.user.id);
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      bookings,
+      "My bookings fetched successfully"
+    )
   );
+});
+
+// ========================================
+// ACCEPT BOOKING (OWNER)
+// ========================================
+
+const acceptBooking = asyncHandler(async (req, res) => {
+  const booking =
+    await bookingService.acceptBooking(
+      req.params.id,
+      req.user.id
+    );
 
   return res.status(200).json(
     new ApiResponse(
       200,
       booking,
-      "Booking updated successfully"
+      "Booking accepted successfully"
     )
   );
 });
 
+// ========================================
+// REJECT BOOKING (OWNER)
+// ========================================
 
-// Cancel Booking
-const cancelBooking = asyncHandler(async (req, res) => {
-  const booking = await bookingService.cancelBooking(
-    req.params.id
+const rejectBooking = asyncHandler(async (req, res) => {
+  const booking =
+    await bookingService.rejectBooking(
+      req.params.id,
+      req.user.id,
+      req.body.reason
+    );
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      booking,
+      "Booking rejected successfully"
+    )
   );
+});
+
+// ========================================
+// CANCEL BOOKING (CUSTOMER)
+// ========================================
+
+const cancelBooking = asyncHandler(async (req, res) => {
+  const booking =
+    await bookingService.cancelBooking(
+      req.params.id,
+      req.user.id,
+      req.body.reason
+    );
 
   return res.status(200).json(
     new ApiResponse(
@@ -88,11 +142,55 @@ const cancelBooking = asyncHandler(async (req, res) => {
   );
 });
 
+// ========================================
+// ASSIGN VEHICLE (OWNER)
+// ========================================
+
+const assignVehicle = asyncHandler(async (req, res) => {
+  const booking =
+    await bookingService.assignVehicle(
+      req.params.id,
+      req.body.vehicleId,
+      req.user.id
+    );
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      booking,
+      "Vehicle assigned successfully"
+    )
+  );
+});
+
+// ========================================
+// COMPLETE BOOKING (OWNER)
+// ========================================
+
+const completeBooking = asyncHandler(async (req, res) => {
+  const booking =
+    await bookingService.completeBooking(
+      req.params.id,
+      req.user.id
+    );
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      booking,
+      "Booking completed successfully"
+    )
+  );
+});
 
 export {
   createBooking,
   getBookingById,
   getAllBookings,
-  updateBooking,
+  getMyBookings,
+  acceptBooking,
+  rejectBooking,
   cancelBooking,
+  assignVehicle,
+  completeBooking,
 };

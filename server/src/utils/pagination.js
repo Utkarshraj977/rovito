@@ -3,11 +3,13 @@ const getPagination = (page = 1, limit = 10) => {
   limit = Number(limit);
 
   const skip = (page - 1) * limit;
+  const take = limit;
 
   return {
     page,
     limit,
     skip,
+    take,
   };
 };
 

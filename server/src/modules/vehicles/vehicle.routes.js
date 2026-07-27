@@ -5,24 +5,40 @@ import {
   getVehicleById,
   getAllVehicles,
   updateVehicle,
-  deleteVehicle,
+  updateAvailabilityStatus,
+  updateOperationalStatus,
 } from "./vehicle.controller.js";
 
 import authenticate from "../../middlewares/auth.middleware.js";
 import authorize from "../../middlewares/role.middleware.js";
+import validate from "../../middlewares/validation.middleware.js";
+
 import { ROLES } from "../../constants/roles.js";
 
+import {
+  createVehicleSchema,
+  updateVehicleSchema,
+  updateAvailabilityStatusSchema,
+  updateOperationalStatusSchema,
+} from "./vehicle.validation.js";
 
 const router = Router();
 
+// ========================================
+// CREATE VEHICLE (OWNER)
+// ========================================
 
 router.post(
   "/",
   authenticate,
-  authorize(ROLES.ADMIN),
+  authorize(ROLES.OWNER),
+  validate(createVehicleSchema),
   createVehicle
 );
 
+// ========================================
+// GET ALL VEHICLES
+// ========================================
 
 router.get(
   "/",
@@ -30,6 +46,9 @@ router.get(
   getAllVehicles
 );
 
+// ========================================
+// GET VEHICLE BY ID
+// ========================================
 
 router.get(
   "/:id",
@@ -37,21 +56,40 @@ router.get(
   getVehicleById
 );
 
+// ========================================
+// UPDATE VEHICLE
+// ========================================
 
 router.patch(
   "/:id",
   authenticate,
-  authorize(ROLES.ADMIN),
+  authorize(ROLES.OWNER),
+  validate(updateVehicleSchema),
   updateVehicle
 );
 
+// ========================================
+// UPDATE AVAILABILITY STATUS
+// ========================================
 
-router.delete(
-  "/:id",
+router.patch(
+  "/:id/availability",
   authenticate,
-  authorize(ROLES.ADMIN),
-  deleteVehicle
+  authorize(ROLES.OWNER),
+  validate(updateAvailabilityStatusSchema),
+  updateAvailabilityStatus
 );
 
+// ========================================
+// UPDATE OPERATIONAL STATUS
+// ========================================
+
+router.patch(
+  "/:id/operational-status",
+  authenticate,
+  authorize(ROLES.OWNER),
+  validate(updateOperationalStatusSchema),
+  updateOperationalStatus
+);
 
 export default router;

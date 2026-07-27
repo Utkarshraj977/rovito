@@ -1,44 +1,165 @@
-import  prisma from "../../config/prisma.js";
+import prisma from "../../config/prisma.js";
 
-const createBooking = async (bookingData) => {
+// ========================================
+// CREATE BOOKING
+// ========================================
+
+const createBooking = (bookingData) => {
   return prisma.booking.create({
     data: bookingData,
-  });
-};
 
-const findBookingById = async (id) => {
-  return prisma.booking.findUnique({
-    where: { id },
-  });
-};
+    include: {
+      customer: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+        },
+      },
 
-const getBookings = async (skip, take) => {
-  return prisma.booking.findMany({
-    skip,
-    take,
-    orderBy: {
-      createdAt: "desc",
+      vehicle: true,
+
+      payment: true,
     },
   });
 };
 
-const updateBooking = async (id, data) => {
-  return prisma.booking.update({
+// ========================================
+// GET BOOKING BY ID
+// ========================================
+
+const findBookingById = (id) => {
+  return prisma.booking.findUnique({
     where: { id },
-    data,
+
+    include: {
+      customer: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          phone: true,
+        },
+      },
+
+      vehicle: true,
+
+      payment: true,
+
+      statusHistory: {
+        orderBy: {
+          createdAt: "desc",
+        },
+      },
+    },
   });
 };
 
-const deleteBooking = async (id) => {
-  return prisma.booking.delete({
-    where: { id },
+// ========================================
+// GET ALL BOOKINGS (OWNER)
+// ========================================
+
+const getAllBookings = (skip, take) => {
+  return prisma.booking.findMany({
+    skip,
+    take,
+
+    orderBy: {
+      createdAt: "desc",
+    },
+
+    include: {
+      customer: {
+        select: {
+          id: true,
+          firstName: true,
+          lastName: true,
+          phone: true,
+        },
+      },
+
+      vehicle: {
+        select: {
+          id: true,
+          registrationNumber: true,
+          make: true,
+          model: true,
+        },
+      },
+
+      payment: {
+        select: {
+          paymentStatus: true,
+          paymentMethod: true,
+          amount: true,
+        },
+      },
+    },
+  });
+};
+
+// ========================================
+// GET CUSTOMER BOOKINGS
+// ========================================
+
+const getCustomerBookings = (customerId) => {
+  return prisma.booking.findMany({
+    where: {
+      customerId,
+    },
+
+    orderBy: {
+      createdAt: "desc",
+    },
+
+    include: {
+      vehicle: true,
+
+      payment: true,
+    },
+  });
+};
+
+// ========================================
+// UPDATE BOOKING
+// ========================================
+
+const updateBooking = (id, data) => {
+  return prisma.booking.update({
+    where: {
+      id,
+    },
+
+    data,
+
+    include: {
+      customer: true,
+
+      vehicle: true,
+
+      payment: true,
+    },
+  });
+};
+
+// ========================================
+// CREATE STATUS HISTORY
+// ========================================
+
+const createStatusHistory = (data) => {
+  return prisma.bookingStatusHistory.create({
+    data,
   });
 };
 
 export default {
   createBooking,
   findBookingById,
-  getBookings,
+  getAllBookings,
+  getCustomerBookings,
   updateBooking,
-  deleteBooking,
+  createStatusHistory,
 };

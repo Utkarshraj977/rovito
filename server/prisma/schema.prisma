@@ -279,7 +279,7 @@ model VehicleImage {
   displayOrder Int      @default(1) @map("display_order") @db.SmallInt
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz()
 
-  vehicle Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+   Vehicle @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
 
   @@index([vehicleId])
   @@map("vehicle_images")

@@ -8,18 +8,35 @@ import morgan from "morgan";
 import env from "./config/env.js";
 
 import apiRoutes from "./routes/index.js";
+import stripeWebhook from "./modules/payments/payment.webhook.js";
+
 import notFoundHandler from "./middlewares/notFound.middleware.js";
 import errorHandler from "./middlewares/error.middleware.js";
 
-
 const app = express();
 
+// ========================================
+// STRIPE WEBHOOK
+// ========================================
 
-// Security
+app.post(
+  "/api/v1/payments/webhook",
+  express.raw({
+    type: "application/json",
+  }),
+  stripeWebhook
+);
+
+// ========================================
+// SECURITY
+// ========================================
+
 app.use(helmet());
 
-
+// ========================================
 // CORS
+// ========================================
+
 app.use(
   cors({
     origin: env.CLIENT_URL,
@@ -27,25 +44,36 @@ app.use(
   })
 );
 
+// ========================================
+// COMPRESSION
+// ========================================
 
-// Compression
 app.use(compression());
 
+// ========================================
+// BODY PARSERS
+// ========================================
 
-// Body Parsers
 app.use(express.json({ limit: "10mb" }));
+
 app.use(express.urlencoded({ extended: true }));
 
+// ========================================
+// COOKIES
+// ========================================
 
-// Cookies
 app.use(cookieParser());
 
+// ========================================
+// LOGGER
+// ========================================
 
-// Logger
 app.use(morgan("dev"));
 
+// ========================================
+// HEALTH CHECK
+// ========================================
 
-// Health Check
 app.get("/", (req, res) => {
   res.status(200).json({
     success: true,
@@ -53,17 +81,22 @@ app.get("/", (req, res) => {
   });
 });
 
+// ========================================
+// API ROUTES
+// ========================================
 
-// API Routes
 app.use("/api/v1", apiRoutes);
 
+// ========================================
+// 404
+// ========================================
 
-// 404 Handler
 app.use(notFoundHandler);
 
+// ========================================
+// ERROR HANDLER
+// ========================================
 
-// Global Error Handler
 app.use(errorHandler);
-
 
 export default app;
